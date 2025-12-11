@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Statistika Lengkap - Data Tunggal & Kelompok</title>
+  <style>
+    body {font-family:'Segoe UI',sans-serif; background:linear-gradient(135deg,#667eea,#764ba2); margin:0; padding:20px; min-height:100vh;}
+    .container {max-width:900px; margin:40px auto; background:white; border-radius:20px; box-shadow:0 20px 60px rgba(0,0,0,0.3); overflow:hidden;}
+    header {background:#2c3e50; color:white; text-align:center; padding:30px;}
+    h1 {margin:0; font-size:34px;}
+    .tab {display:flex; background:#34495e;}
+    .tab button {flex:1; padding:18px; background:none; border:none; color:white; font-size:19px; cursor:pointer;}
+    .tab button.active, .tab button:hover {background:#3498db;}
+    .content {padding:40px; display:none;}
+    .content.active {display:block;}
+    label {display:block; margin:25px 0 10px; font-weight:bold; font-size:19px; color:#2c3e50;}
+    textarea {width:100%; padding:16px; font-size:17px; border:2px solid #3498db; border-radius:12px; height:140px; box-sizing:border-box;}
+    button {margin-top:30px; padding:18px; width:100%; background:#e74c3c; color:white; border:none; border-radius:12px; font-size:21px; font-weight:bold; cursor:pointer;}
+    button:hover {background:#c0392b;}
+    #output {margin-top:35px; padding:30px; background:#f8f9fa; border-radius:15px; border-left:10px solid #27ae60; font-size:20px; line-height:2.2;}
+    footer {text-align:center; padding:25px; background:#2c3e50; color:#bdc3c7; font-size:15px;}
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Statistika Lengkap</h1>
+    <p>Data Tunggal & Data Kelompok</p>
+  </header>
+
+  <div class="tab">
+    <button class="active" onclick="buka('tunggal')">Data Tunggal</button>
+    <button onclick="buka('kelompok')">Data Kelompok</button>
+  </div>
+
+  <!-- DATA TUNGGAL -->
+  <div id="tunggal" class="content active">
+    <label>Masukkan data tunggal (pisah spasi atau koma):</label>
+    <textarea id="dataTunggal" placeholder="Contoh: 70 85 90 85 78 92 88 85">70 85 90 85 78 92 88 85</textarea>
+    <button onclick="hitungTunggal()">HITUNG DATA TUNGGAL</button>
+  </div>
+
+  <!-- DATA KELOMPOK -->
+  <div id="kelompok" class="content">
+    <label>Data Kelompok (format: nilai_tengah,frekuensi — satu baris satu kelas):</label>
+    <textarea id="dataKelompok" placeholder="Contoh:
+60,5
+70,12
+80,18
+90,10
+100,5">60,5
+70,12
+80,18
+90,10
+100,5</textarea>
+    <button onclick="hitungKelompok()">HITUNG DATA KELOMPOK</button>
+  </div>
+
+  <div id="output">Pilih tab dan klik tombol untuk menghitung...</div>
+
+  <footer>
+    Aplikasi Statistika SMP/SMA/Kuliah — Hasil pakai koma Indonesia © 2025
+  </footer>
+</div>
+
+<script>
+// Format angka pakai koma
+function koma(x) {
+  return x.toFixed(3).replace('.', ',');
+}
+
+function buka(tab) {
+  document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+  document.getElementById(tab).classList.add('active');
+  document.querySelectorAll('.tab button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('output').innerHTML = "Pilih tab dan klik tombol untuk menghitung...";
+}
+
+// DATA TUNGGAL
+function hitungTunggal() {
+  const text = document.getElementById("dataTunggal").value.trim();
+  if (!text) return alert("Masukkan data dulu!");
+  
+  const arr = text.replace(/,/g,' ').split(/\s+/).filter(x=>x);
+  const data = arr.map(x => parseFloat(x.replace(',','.'))).filter(x => !isNaN(x));
+  if (data.length===0) return alert("Input harus angka!");
+  data.sort((a,b)=>a-b);
+
+  const n = data.length;
+  const mean = data.reduce((a,b)=>a+b,0) / n;
+  const mid = Math.floor(n/2);
+  const median = n%2===0 ? (data[mid-1]+data[mid])/2 : data[mid];
+
+  const freq = {};
+  data.forEach(x=>freq[x]=(freq[x]||0)+1);
+  const maxF = Math.max(...Object.values(freq));
+  const modus = Object.keys(freq).filter(k=>freq[k]===maxF).join(', ') || "Tidak ada";
+
+  document.getElementById("output").innerHTML = `
+    <strong>DATA TUNGGAL</strong><br><br>
+    Data: ${data.join(', ')}<br>
+    Jumlah data (n): <b>${n}</b><br><br>
+    → Mean (Rata-rata) : <b>${koma(mean)}</b><br>
+    → Median           : <b>${koma(median)}</b><br>
+    → Modus            : <b>${modus}</b>
+  `;
+}
+
+// DATA KELOMPOK
+function hitungKelompok() {
+  const text = document.getElementById("dataKelompok").value.trim();
+  if (!text) return alert("Masukkan data kelompok!");
+  
+  const lines = text.split('\n').map(l=>l.trim()).filter(l=>l);
+  const xi = [], fi = [];
+  for (let line of lines) {
+    const p = line.split(',');
+    if (p.length!==2) return alert("Format salah! Gunakan: nilai_tengah,frekuensi");
+    const x = parseFloat(p[0].replace(',','.'));
+    const f = parseFloat(p[1].replace(',','.'));
+    if (isNaN(x)||isNaN(f)) return alert("Harus angka semua!");
+    xi.push(x); fi.push(f);
+  }
+
+  const n = fi.reduce((a,b)=>a+b,0);
+  const mean = xi.reduce((sum,x,i)=>sum + x*fi[i],0) / n;
+
+  // Median kelas
+  let kum = 0, medianKelas = 0;
+  for (let i=0; i<fi.length; i++) {
+    kum += fi[i];
+    if (kum >= n/2) { medianKelas = xi[i]; break; }
+  }
+
+  // Modus kelas
+  const maxF = Math.max(...fi);
+  const modusKelas = xi[fi.indexOf(maxF)];
+
+  document.getElementById("output").innerHTML = `
+    <strong>DATA KELOMPOK</strong><br><br>
+    Jumlah data (n): <b>${n}</b><br><br>
+    → Mean (Rata-rata) : <b>${koma(mean)}</b><br>
+    → Median (kelas)   : <b>${koma(medianKelas)}</b><br>
+    → Modus (kelas)    : <b>${koma(modusKelas)}</b>
+  `;
+}
+</script>
+
+</body>
+</html>
